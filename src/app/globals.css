@@ -1,0 +1,442 @@
+/* ---------------------------------------------------------------------------
+ * Sankhya Quiz — design tokens
+ * Extraidos literalmente do artboard 1a do prototipo (Claude Design).
+ * Desenvolvido por Luiz Eduardo — https://luizeduos.web.app
+ * ------------------------------------------------------------------------- */
+@import "tailwindcss";
+
+/* next-themes usa estrategia de classe, nao prefers-color-scheme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===========================================================================
+ * 1. Paletas cruas — light (:root) e dark (.dark)
+ * ======================================================================== */
+:root {
+  /* superficies e tinta */
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --border: #e6ebf1;
+  --border-strong: #dfe6ee;
+  --ink: #16202e;
+  --muted: #6b7a8d;
+  --subtle: #8b97a6;
+
+  /* trilho neutro / botao neutro */
+  --track: #e7edf4;
+  --track-deep: #cfd8e3;
+  --neutral-btn: #eef2f7;
+  --neutral-btn-deep: #d7dee7;
+  --neutral-btn-ink: #93a0b0;
+
+  /* verde — acerto / progresso */
+  --green: #17b26a;
+  --green-deep: #0f7a45;
+  --green-soft: #e8f9f0;
+  --green-ink: #0d7a49;
+  --green-ink-2: #12613e;
+
+  /* azul — marca / navegacao */
+  --blue: #1b7fe3;
+  --blue-deep: #12559b;
+  --blue-soft: #eaf3fe;
+  --blue-ink: #125fae;
+  --blue-hero-from: #1b7fe3;
+  --blue-hero-to: #145fae;
+
+  /* coral — erro */
+  --coral: #ff4d5e;
+  --coral-deep: #c9313f;
+  --coral-soft: #fdecee;
+  --coral-border: #ffdfe3;
+  --coral-ink: #b8303f;
+  --coral-ink-2: #7d2b36;
+  --coral-quote: #8a4a52;
+  --coral-rule: #f2a8b1;
+
+  /* dourado — XP */
+  --gold: #ffc53d;
+  --gold-deep: #d9a31f;
+  --gold-soft: #fff8e1;
+  --gold-border: #f2e2b0;
+  --gold-ink: #b98600;
+  --gold-ink-2: #8a6a1f;
+
+  /* laranja — streak */
+  --orange: #ff7a1a;
+  --orange-soft: #fff3e6;
+  --orange-dim: #ffd7b3;
+  --orange-ink: #ff7a1a;
+
+  /* violeta — liga */
+  --violet: #8b5cf6;
+  --violet-deep: #6d3ee0;
+  --violet-soft: #f3ecfe;
+  --violet-ink: #7c4ded;
+  --violet-ink-2: #5b2fc4;
+  --violet-row: #4a3a72;
+
+  /* avatar placeholder (hachura do design) */
+  --avatar-a: #dfe6ee;
+  --avatar-b: #eef2f7;
+
+  /* pontos da trilha serpenteante (artboard 1b) */
+  --trilha-dot-verde: #bfe7d3;
+  --trilha-dot-azul: #a9d3f6;
+  --trilha-dot-cinza: #dbe3ec;
+  --trilha-dot-dourado: #f0dda7;
+
+  /* profundidade — sombra solida deslocada */
+  --depth-y: 5px;
+  --depth-color: var(--track-deep);
+}
+
+.dark {
+  --bg: #0e141c;
+  --surface: #1b2431;
+  --surface-2: #233145;
+  --border: #2a3646;
+  --border-strong: #334255;
+  --ink: #eaf0f7;
+  --muted: #8b9bb0;
+  --subtle: #6f8098;
+
+  --track: #233145;
+  --track-deep: #2a3646;
+  --neutral-btn: #233145;
+  --neutral-btn-deep: #16202c;
+  --neutral-btn-ink: #6f8098;
+
+  --green: #2bd98a;
+  --green-deep: #148a55;
+  --green-soft: #102a1e;
+  --green-ink: #6ee7a8;
+  --green-ink-2: #9df0c4;
+
+  --blue: #4c9df5;
+  --blue-deep: #1e5fa8;
+  --blue-soft: #12283f;
+  --blue-ink: #9dc2e8;
+  --blue-hero-from: #173a5e;
+  --blue-hero-to: #12283f;
+
+  --coral: #ff6b7a;
+  --coral-deep: #a83d4a;
+  --coral-soft: #2a1622;
+  --coral-border: #4a2330;
+  --coral-ink: #ff6b7a;
+  --coral-ink-2: #c99aa4;
+  --coral-quote: #c99aa4;
+  --coral-rule: #6b3340;
+
+  --gold: #ffd166;
+  --gold-deep: #a8802e;
+  --gold-soft: #2a2312;
+  --gold-border: #4a3d1a;
+  --gold-ink: #ffd166;
+  --gold-ink-2: #d8b25a;
+
+  --orange: #ff9147;
+  --orange-soft: #2a1d12;
+  --orange-dim: #5c3a1e;
+  --orange-ink: #ff9147;
+
+  --violet: #a78bfa;
+  --violet-deep: #6d3ee0;
+  --violet-soft: #221a38;
+  --violet-ink: #c4b5fd;
+  --violet-ink-2: #c4b5fd;
+  --violet-row: #b6a4e8;
+
+  --avatar-a: #2a3646;
+  --avatar-b: #334255;
+
+  --trilha-dot-verde: #1d5b3f;
+  --trilha-dot-azul: #24476b;
+  --trilha-dot-cinza: #2a3646;
+  --trilha-dot-dourado: #4a3d1a;
+
+  --depth-color: var(--track-deep);
+}
+
+/* ===========================================================================
+ * 2. Mapeamento para utilitarios Tailwind (`inline` = resolve em runtime,
+ *    entao `.dark` troca o valor sem recompilar)
+ * ======================================================================== */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+
+  --color-track: var(--track);
+  --color-track-deep: var(--track-deep);
+  --color-neutralbtn: var(--neutral-btn);
+  --color-neutralbtn-deep: var(--neutral-btn-deep);
+  --color-neutralbtn-ink: var(--neutral-btn-ink);
+
+  --color-green: var(--green);
+  --color-green-deep: var(--green-deep);
+  --color-green-soft: var(--green-soft);
+  --color-green-ink: var(--green-ink);
+  --color-green-ink2: var(--green-ink-2);
+
+  --color-blue: var(--blue);
+  --color-blue-deep: var(--blue-deep);
+  --color-blue-soft: var(--blue-soft);
+  --color-blue-ink: var(--blue-ink);
+
+  --color-coral: var(--coral);
+  --color-coral-deep: var(--coral-deep);
+  --color-coral-soft: var(--coral-soft);
+  --color-coral-border: var(--coral-border);
+  --color-coral-ink: var(--coral-ink);
+  --color-coral-ink2: var(--coral-ink-2);
+  --color-coral-quote: var(--coral-quote);
+  --color-coral-rule: var(--coral-rule);
+
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-border: var(--gold-border);
+  --color-gold-ink: var(--gold-ink);
+  --color-gold-ink2: var(--gold-ink-2);
+
+  --color-orange: var(--orange);
+  --color-orange-soft: var(--orange-soft);
+  --color-orange-dim: var(--orange-dim);
+  --color-orange-ink: var(--orange-ink);
+
+  --color-violet: var(--violet);
+  --color-violet-deep: var(--violet-deep);
+  --color-violet-soft: var(--violet-soft);
+  --color-violet-ink: var(--violet-ink);
+  --color-violet-ink2: var(--violet-ink-2);
+  --color-violet-row: var(--violet-row);
+
+  /* tipografia — variaveis injetadas por next/font no layout */
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, Menlo, monospace;
+
+  /* raios do design: r8 chips - r14 cards - r16 botoes/alternativas -
+     r20 paineis - r24 heros - pill */
+  --radius-chip: 8px;
+  --radius-card: 14px;
+  --radius-btn: 16px;
+  --radius-panel: 20px;
+  --radius-hero: 24px;
+
+  /* escala tipografica do artboard 1a */
+  --text-display: 44px;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -1px;
+  --text-title: 30px;
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.4px;
+  --text-subtitle: 20px;
+  --text-subtitle--line-height: 1.3;
+  --text-label: 12px;
+  --text-label--line-height: 1;
+  --text-label--letter-spacing: 1.4px;
+
+  --font-weight-black: 1000;
+}
+
+/* ===========================================================================
+ * 3. Base
+ * ======================================================================== */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    /* evita CLS quando a barra de rolagem aparece/desaparece */
+    scrollbar-gutter: stable;
+  }
+  /* foco visivel e consistente, no lugar do outline do browser */
+  :focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: var(--blue);
+    color: #fff;
+  }
+}
+
+/* numeros tabulares em contadores para nao "pular" no count-up */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===========================================================================
+ * 4. Profundidade — a assinatura do design
+ *    "sombra solida deslocada 4-6px na cor escura do proprio elemento;
+ *     ao pressionar, o botao desce 4px e a sombra vira 2px."
+ * ======================================================================== */
+@utility depth {
+  box-shadow: 0 var(--depth-y) 0 var(--depth-color);
+}
+@utility depth-* {
+  --depth-y: calc(--value(integer) * 1px);
+  box-shadow: 0 var(--depth-y) 0 var(--depth-color);
+}
+
+/* Alvo de toque pressionavel. O translate e feito pelo Framer Motion
+   (whileTap), aqui so encolhemos a sombra em sincronia. */
+.pressable:active {
+  --depth-y: 2px;
+}
+
+/* Hachura diagonal usada como avatar placeholder no prototipo. */
+@utility avatar-hatch {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--avatar-a) 0 6px,
+    var(--avatar-b) 6px 12px
+  );
+}
+
+/* ===========================================================================
+ * 5. Animacoes — so transform/opacity
+ * ======================================================================== */
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ink) 8%, transparent),
+    transparent
+  );
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes flame {
+  0%,
+  100% {
+    transform: scale(1) rotate(-2deg);
+  }
+  50% {
+    transform: scale(1.09) rotate(2deg);
+  }
+}
+.flame {
+  animation: flame 1.8s ease-in-out infinite;
+  transform-origin: 50% 85%;
+}
+
+/* Brilho que percorre a barra de progresso ao avancar. */
+@keyframes sheen {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(320%);
+  }
+}
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  transform: translateX(-120%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: sheen 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Fundo animado leve das telas de auth: dois blobs em translate,
+   nunca filter/blur animado. */
+@keyframes drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6%, -4%, 0) scale(1.06);
+  }
+}
+@keyframes drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.04);
+  }
+  50% {
+    transform: translate3d(-5%, 5%, 0) scale(1);
+  }
+}
+.drift-a {
+  animation: drift-a 18s ease-in-out infinite;
+}
+.drift-b {
+  animation: drift-b 22s ease-in-out infinite;
+}
+
+/* ===========================================================================
+ * 6. prefers-reduced-motion — mata movimento, mantem legibilidade.
+ *    O Framer Motion e desligado no MotionProvider; aqui cuidamos do CSS.
+ * ======================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 120ms !important;
+    scroll-behavior: auto !important;
+  }
+  .shimmer::after,
+  .sheen::after {
+    animation: none;
+    opacity: 0.3;
+    transform: none;
+    width: 100%;
+  }
+  .flame,
+  .drift-a,
+  .drift-b {
+    animation: none;
+  }
+}
+
+/* Barra de rolagem discreta, coerente com os dois temas. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--track-deep);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

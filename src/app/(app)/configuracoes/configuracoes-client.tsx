@@ -12,6 +12,7 @@ import { SkeletonCard } from "@/components/feedback/states";
 import { useHydrated } from "@/store/hydration";
 import { META_DIARIA_PADRAO, useProgressStore } from "@/store/progress";
 import { useErrorsStore } from "@/store/errors";
+import { useRankingStore } from "@/store/ranking";
 import { useSessionStore } from "@/store/session";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { spring } from "@/lib/motion/springs";
@@ -33,6 +34,8 @@ export function ConfiguracoesClient({
   const meta = useProgressStore((s) => s.metaDiariaMin);
   const definirMeta = useProgressStore((s) => s.definirMeta);
   const resetarProgresso = useProgressStore((s) => s.resetar);
+  const participarRanking = useRankingStore((s) => s.participar);
+  const definirParticipacao = useRankingStore((s) => s.definirParticipacao);
   const limparErros = useErrorsStore((s) => s.limpar);
   const abandonarSessao = useSessionStore((s) => s.abandonar);
 
@@ -134,11 +137,46 @@ export function ConfiguracoesClient({
         )}
       </Secao>
 
+      {/* Ranking */}
+      <Secao titulo="Ranking">
+        {pronto ? (
+          <>
+            <Item
+              rotulo="Aparecer no ranking"
+              descricao={
+                participarRanking
+                  ? "Seu nome, foto e cargo do Google aparecem no placar, junto com XP, ofensiva e lições concluídas."
+                  : "Você está fora do placar. Seu progresso continua sendo contado normalmente."
+              }
+            >
+              <SwitchLinha
+                checked={participarRanking}
+                onCheckedChange={(v) => {
+                  definirParticipacao(v);
+                  toast.sucesso(
+                    v ? "Você entrou no ranking." : "Você saiu do ranking.",
+                  );
+                }}
+                rotulo="Aparecer no ranking"
+              />
+            </Item>
+            <p className="text-[13px] leading-relaxed text-subtle">
+              Desligar remove seu registro do placar no servidor — não é apenas
+              uma preferência de exibição.
+            </p>
+          </>
+        ) : (
+          <SkeletonCard h={70} className="border-0" />
+        )}
+      </Secao>
+
       {/* Dados locais */}
       <Secao titulo="Dados">
         <p className="text-[14px] leading-relaxed text-muted">
           Seu progresso, XP, ofensiva e histórico de erros ficam guardados neste
-          navegador (localStorage). Nada é enviado para um servidor nesta versão.
+          navegador (localStorage). A única coisa que sai daqui é o resumo
+          publicado no ranking (XP, ofensiva e número de lições) — e só enquanto
+          a opção acima estiver ligada.
         </p>
         {confirmandoReset ? (
           <div className="flex flex-col gap-2.5 rounded-card border-2 border-coral bg-coral-soft p-4">
@@ -154,6 +192,9 @@ export function ConfiguracoesClient({
                   resetarProgresso();
                   limparErros();
                   abandonarSessao();
+                  // Republica o resumo zerado: sem isto o placar continuaria
+                  // exibindo o XP antigo de quem acabou de apagar tudo.
+                  void useRankingStore.getState().publicar({ forcar: true });
                   setConfirmandoReset(false);
                   toast.sucesso("Progresso apagado.");
                 }}

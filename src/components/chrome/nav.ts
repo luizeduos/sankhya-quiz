@@ -1,7 +1,8 @@
 /**
  * Navegacao unica para a sidebar do desktop (artboard 1b) e a bottom tab bar
- * do mobile (artboard 1c). A tab bar usa `curto` e mostra apenas os 5
- * primeiros itens, exatamente como no protótipo.
+ * do mobile (artboard 1c). A tab bar usa `curto` e mostra os itens que nao sao
+ * `soDesktop` — hoje cinco, o maximo que cabe em 390px sem apertar o alvo de
+ * toque. Configuracoes fica fora porque e a tela menos visitada das seis.
  */
 export type ItemNav = {
   href: string;
@@ -23,6 +24,7 @@ export const NAV: ItemNav[] = [
     emoji: "🔁",
     badgeErros: true,
   },
+  { href: "/ranking", label: "Ranking", curto: "Ranking", emoji: "🏆" },
   { href: "/conteudo", label: "Conteúdo", curto: "Conteúdo", emoji: "📄" },
   { href: "/perfil", label: "Perfil", curto: "Perfil", emoji: "👤" },
   {

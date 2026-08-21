@@ -2,7 +2,7 @@
 
 import { m } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useHydrated } from "@/store/hydration";
 import {
@@ -16,8 +16,10 @@ import {
   faltaParaMeta,
   useProgressStore,
 } from "@/store/progress";
+import { useRankingStore } from "@/store/ranking";
+import type { RespostaRanking } from "@/lib/ranking/tipos";
 import { spring } from "@/lib/motion/springs";
-import { cn } from "@/lib/utils";
+import { cn, formatNumber } from "@/lib/utils";
 
 /* ===========================================================================
  * Card "Revisar erros" — borda coral, contador, pontos fracos (artboard 1b)
@@ -93,6 +95,110 @@ export function RailRevisarErros() {
       </Button>
     </div>
   );
+}
+
+/* ===========================================================================
+ * Card "Ranking da semana" — minha posicao, sem a lista inteira
+ *
+ * Busca o placar completo e usa apenas a propria linha. Parece desperdicio,
+ * mas nao e: o endpoint precisa ordenar todo mundo para saber a MINHA posicao,
+ * entao um endpoint "so a minha posicao" faria exatamente o mesmo trabalho no
+ * servidor e economizaria alguns kB de JSON. Se o placar crescer para milhares
+ * de pessoas, o corte certo e paginar `linhas` — nao duplicar a rota.
+ * ======================================================================== */
+export function RailRanking() {
+  const router = useRouter();
+  const pronto = useHydrated();
+  const participar = useRankingStore((s) => s.participar);
+  const [dados, setDados] = useState<RespostaRanking | null>(null);
+  const [falhou, setFalhou] = useState(false);
+
+  useEffect(() => {
+    if (!pronto || !participar) return;
+    let vivo = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/ranking?criterio=semana", {
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const json = (await res.json()) as RespostaRanking;
+        if (vivo) setDados(json);
+      } catch {
+        if (vivo) setFalhou(true);
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [pronto, participar]);
+
+  if (!pronto) return <CardSkeleton h={168} />;
+
+  const minha = dados?.minhaLinha ?? null;
+  const lider = dados?.linhas[0] ?? null;
+  // Quanto falta para a posicao imediatamente acima — a informacao que
+  // realmente move alguem a fazer uma licao mais.
+  const acima =
+    dados && minha
+      ? [...dados.linhas].reverse().find((l) => l.valor > minha.valor)
+      : undefined;
+
+  return (
+    <div className="flex flex-col gap-2.5 rounded-panel border border-line bg-surface p-5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[17px] font-black">Ranking da semana</p>
+        {minha && (
+          <m.span
+            className="tnum rounded-full bg-violet px-2.5 py-[3px] text-[13px] font-black text-white"
+            initial={{ scale: 0.6 }}
+            animate={{ scale: 1 }}
+            transition={spring.bouncy}
+          >
+            {minha.posicao}º
+          </m.span>
+        )}
+      </div>
+
+      <p className="text-[14px] leading-[1.5] text-muted">
+        {!participar
+          ? "Você optou por ficar fora do placar. Dá para voltar em Configurações."
+          : falhou
+            ? "Placar indisponível agora. Seu progresso continua sendo salvo."
+            : !dados
+              ? "Carregando o placar…"
+              : !minha
+                ? "Responda uma questão esta semana para entrar no placar."
+                : acima
+                  ? `Faltam ${formatNumber(acima.valor - minha.valor)} XP para passar ${primeiroNome(acima.entrada.nome)} e subir para ${acima.posicao}º.`
+                  : minha.posicao === 1
+                    ? `Você lidera com ${formatNumber(minha.valor)} XP esta semana.`
+                    : `${formatNumber(minha.valor)} XP esta semana, entre ${dados.participantes} participantes.`}
+      </p>
+
+      {lider && participar && minha?.posicao !== 1 && (
+        <p className="text-[13px] text-subtle">
+          Liderança: <strong className="text-ink">{lider.entrada.nome}</strong>{" "}
+          com {formatNumber(lider.valor)} XP.
+        </p>
+      )}
+
+      <Button
+        variant="violet"
+        size="md"
+        full
+        className="mt-1"
+        onClick={() => router.push("/ranking")}
+      >
+        Ver placar completo
+      </Button>
+    </div>
+  );
+}
+
+/** "Maria Silva" -> "Maria". Nome inteiro estouraria a linha do card. */
+function primeiroNome(nome: string) {
+  return nome.split(" ")[0];
 }
 
 /* ===========================================================================

@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/chrome/sidebar";
 import { Toaster } from "@/components/ui/toast";
 import { PageTransition } from "@/components/motion/page-transition";
 import { StoreHydration } from "@/store/hydration";
+import { RankingSync } from "@/store/ranking-sync";
 import { auth } from "@/lib/auth";
 
 /**
@@ -32,6 +33,7 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-dvh bg-bg">
       <StoreHydration />
+      <RankingSync />
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">

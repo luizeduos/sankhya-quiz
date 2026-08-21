@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { ContinueHero } from "@/components/home/continue-hero";
 import { ModuloCard } from "@/components/home/modulo-card";
-import { RailOfensiva, RailRevisarErros } from "@/components/home/rail";
+import {
+  RailOfensiva,
+  RailRanking,
+  RailRevisarErros,
+} from "@/components/home/rail";
 import { Trilha } from "@/components/home/trilha";
 import { MetaDiaria } from "@/components/chrome/sidebar";
 import { SectionLabel } from "@/components/ui/card";
@@ -173,6 +177,7 @@ export function HomeClient({ primeiroNome }: { primeiroNome: string }) {
         {/* Rail direita — artboard 1b */}
         <aside className="flex w-full shrink-0 flex-col gap-4 xl:w-[330px]">
           <RailRevisarErros />
+          <RailRanking />
           <RailOfensiva />
           <div className="lg:hidden">
             <MetaDiaria />

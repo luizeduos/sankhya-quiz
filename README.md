@@ -22,6 +22,9 @@ conteúdo saiu.
 - **Fonte verificável**: cada questão aponta para a aula correspondente em
   `ead.sankhya.com.br`. Os módulos são as trilhas reais do EAD, extraídas do
   catálogo em `src/data/ead/catalog.json` (387 aulas, 23 trilhas).
+- **Ranking real, para todos**: placar compartilhado com três critérios — XP
+  da semana (zera toda segunda), XP total e ofensiva — com pódio, sua posição
+  fixada na tela quando você está fora do top e opt-out em Configurações.
 - **Gamificação**: XP, níveis, ofensiva (streak) diária e meta diária.
   **Sem sistema de vidas** — errar nunca bloqueia o estudo: o app existe para
   explicar o erro, e interromper quem errou trabalharia contra isso. O único
@@ -45,6 +48,7 @@ conteúdo saiu.
 | Estilo | Tailwind CSS v4 (CSS-first, tokens em `src/app/globals.css`) |
 | Animação | [`motion`](https://motion.dev) (Framer Motion) via `LazyMotion` + `m.*` |
 | Estado | Zustand + `persist` (localStorage) |
+| Placar | Redis via API REST (Vercel KV / Upstash) com `fetch` — sem SDK; fallback em memória |
 | Arrastar | `@dnd-kit` (com sensor de teclado) |
 | Autenticação | NextAuth v5 (Auth.js) — **Google como único provedor**, sessão JWT em cookie httpOnly |
 | Tema | next-themes |
@@ -101,6 +105,7 @@ Todas estão documentadas em [`.env.example`](./.env.example). Resumo:
 | `AUTH_SECRET` | **Sim** | Segredo que assina/criptografa o JWT de sessão. Gere com `openssl rand -base64 32`. Sem ela o NextAuth v5 não sobe em produção. |
 | `AUTH_GOOGLE_ID` | **Sim** | Client ID do OAuth do Google — é o único método de entrada. |
 | `AUTH_GOOGLE_SECRET` | **Sim** | Client secret do OAuth do Google. |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Não (recomendada) | Redis REST que guarda o placar do ranking. Sem elas o ranking funciona em memória do servidor: reinicia a cada deploy e não é compartilhado entre instâncias serverless. Na Vercel, *Storage → Upstash for Redis → Connect to Project* injeta as duas. `UPSTASH_REDIS_REST_URL`/`_TOKEN` são aceitas como alternativa. |
 | `NEXTAUTH_URL` | Não | Só se usar domínio próprio e quiser forçá-lo como canônico. Com `trustHost: true` a origem é inferida pelo host da requisição, então preview deploys funcionam sozinhos. |
 
 Sem as variáveis do Google o app sobe, mas ninguém entra: a tela de login
@@ -125,7 +130,12 @@ mostra um aviso dizendo exatamente o que falta, em vez de um botão que quebra
    - `AUTH_GOOGLE_ID` e `AUTH_GOOGLE_SECRET` — obrigatórias: sem elas ninguém
      consegue entrar.
    - `NEXTAUTH_URL` — dispensável (ver tabela acima).
-4. **Deploy.** O build roda `npm run validate:data` antes de `next build`
+4. **Ranking (opcional, mas recomendado).** Em *Storage → Create Database →
+   Upstash for Redis → Connect to Project*, a Vercel injeta
+   `KV_REST_API_URL` e `KV_REST_API_TOKEN` sozinha. Sem isso o placar roda em
+   memória: funciona, mas reinicia a cada deploy e não é compartilhado entre
+   instâncias serverless.
+5. **Deploy.** O build roda `npm run validate:data` antes de `next build`
    (script `prebuild`), então conteúdo de questão malformado derruba o deploy em
    vez de chegar em produção.
 
@@ -167,8 +177,9 @@ src/
   app/
     (auth)/            login — única rota pública
     (app)/             área autenticada: trilha, lição, resumo, revisar,
-                       conteúdo, perfil, configurações, onboarding
+                       ranking, conteúdo, perfil, configurações, onboarding
     api/auth/          handler do NextAuth
+    api/ranking/       GET placar + POST publicação do próprio resumo
     globals.css        design tokens (light/dark), profundidade, animações
   components/
     chrome/            Sidebar, BottomTabBar, HUD, Credits, ThemeToggle
@@ -189,7 +200,8 @@ src/
     auth/              config edge-safe (middleware) + provider do Google
     quiz/              engine (correção), progresso (estados da trilha)
     ead/catalog.ts     leitura do catálogo (server-only)
-  store/               progress, errors, session, xp-flight, hydration
+    ranking/           contrato, ordenação e persistência do placar
+  store/               progress, errors, session, ranking, xp-flight, hydration
 middleware.ts          protege as rotas do app
 ```
 
@@ -197,8 +209,9 @@ middleware.ts          protege as rotas do app
 
 ## Arquitetura: pronto para plugar um backend
 
-Hoje o progresso vive no `localStorage` e os usuários num array em memória.
-Os dois pontos de troca estão isolados e comentados:
+Hoje o progresso individual vive no `localStorage` e a identidade vem do Google
+(não há tabela de usuários). O único estado compartilhado é o placar do
+ranking. Os pontos de troca estão isolados e comentados:
 
 - **Usuários** — não há tabela de usuários: a identidade vem do Google e a
   sessão é um JWT. Se um dia precisar persistir perfis (cargo real, empresa,
@@ -210,10 +223,66 @@ Os dois pontos de troca estão isolados e comentados:
 - **Questões** — `src/app/(app)/revisar/actions.ts` já tem a assinatura de uma
   API (`(ids) => Promise<Questao[]>`); trocar a leitura local por HTTP é uma
   linha.
-**Não há dado fictício em nenhuma tela.** A tela de Liga foi removida junto com
-o mock: sem backend multiusuário não existe ranking real, e um ranking com
-concorrentes inventados seria pior que não ter a tela. Quando houver banco com
-vários usuários, ela volta lendo a tabela.
+- **Ranking** — já é servidor. `src/lib/ranking/storage.ts` isola a
+  persistência atrás de três métodos (`ler`/`gravar`/`remover`), então trocar
+  Redis por Postgres é implementar uma interface, sem tocar na API nem na tela.
+**Não há dado fictício em nenhuma tela.** A tela de Liga do protótipo vinha com
+concorrentes inventados; em vez de manter o mock, ela virou o **/ranking** —
+descrito na seção seguinte —, que só mostra quem realmente estudou.
+
+---
+
+## Ranking
+
+O placar é a única parte do app com **estado compartilhado**. O resto do
+progresso continua sendo do navegador, e essa mistura é deliberada:
+
+```
+navegador (localStorage)          servidor
+progresso completo  ──publica──▶  resumo: XP total, XP da semana,
+(histórico por dia,               ofensiva, lições, minutos
+erros, sessão ativa)   ◀──lê───   placar de todos, já ordenado
+```
+
+**Três critérios, um registro.** Semana, geral e ofensiva saem do *mesmo*
+registro publicado por cada pessoa, apenas reordenado na leitura
+(`src/lib/ranking/service.ts`). Não existem três placares para manter em
+sincronia, e a virada de semana não precisa de job nenhum: quem tem semana
+antiga gravada simplesmente vale 0 no critério semanal.
+
+**Empates dividem a posição** (1, 2, 2, 4), como em placar esportivo. Quem
+está fora do top 50 vê a própria linha fixada no rodapé da tela.
+
+**O que sai do seu navegador.** Nome, foto e cargo vêm da sessão do Google;
+XP, ofensiva e número de lições vêm do resumo. Nada de histórico por dia,
+respostas ou erros. Em *Configurações › Ranking* o opt-out **remove o
+registro do servidor** — não é só esconder da lista.
+
+**Publicação.** `src/store/ranking-sync.tsx` publica quando o app abre, quando
+o progresso muda (com debounce de 1,5 s — um acerto não vira uma requisição) e
+quando a aba volta ao foco (ofensiva e XP da semana dependem da data, e quem
+deixou a aba aberta na virada da meia-noite tem números diferentes sem ter
+feito nada).
+
+**Honestidade sobre os números.** Como o progresso é calculado no cliente, os
+valores do placar são **autodeclarados** — dá para inflá-los pelo console. A
+tela diz isso com essas palavras. Auditar exigiria mover a correção e o XP para
+o servidor, o que é possível (as questões e a correção já vivem lá) mas muda o
+modelo de dados do app inteiro; enquanto isso, o placar existe para estimular,
+não para avaliar.
+
+**Persistência.** Com `KV_REST_API_URL`/`KV_REST_API_TOKEN` o placar vive num
+hash do Redis, falado por HTTP puro com `fetch` — **sem SDK e sem dependência
+nova**, e compatível com o runtime Edge. Sem as variáveis, cai para memória do
+servidor: continua funcionando, mas reinicia a cada deploy e não é compartilhado
+entre instâncias serverless — e a tela avisa, com um selo "placar temporário",
+em vez de fingir que persistiu.
+
+**Segurança.** A identidade (id, nome, foto, cargo) sai *sempre* da sessão,
+nunca do corpo da requisição — caso contrário qualquer pessoa logada poderia
+escrever no registro de outra ou inventar um participante. `/api` fica fora do
+matcher do middleware, então a checagem de sessão dentro da rota não é
+redundante: é a única que existe.
 
 ---
 
